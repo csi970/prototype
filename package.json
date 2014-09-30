@@ -1,0 +1,20 @@
+{
+  "name": "music-analysis",
+  "version": "0.0.0",
+  "description": "Analyzes MusicXML files and determines difficulty based on a variety of factors",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "contributors": [
+    {
+      "name": "Ben Burwell",
+      "email": "bburwell1@gmail.com"
+    },
+    {
+      "name": "Andrew Trautmann",
+      "email": "atraut93@gmail.com"
+    }
+  ],
+  "license": "MIT"
+}
