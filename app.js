@@ -1,14 +1,29 @@
 var x2j = require('xml-to-json');
 var fs = require('fs');
 
-//TODO: Make Note object/function
+function TimeSignature() {
+    this.num = null;
+    this.type = null;
+    this.tempo = null;
+};
+
+function Measure() {
+    this.notes = new Array();
+    this.key = null;
+    this.timeSignature = null;
+};
+
+function Note() {
+    this.rest = null;
+    this.pitch = null;
+    this.accidental = null;
+};
 
 function Key(value) {
     this.value = null;
     this.name = null;
     this.accidentals = [];
     this.accidentalDirection = 0;
-
 
     var sharpSequence = 'FCGDAEB';
     var flatSequence = 'BEADGCF';
