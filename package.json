@@ -2,9 +2,18 @@
   "name": "music-analysis",
   "version": "0.0.0",
   "description": "Analyzes MusicXML files and determines difficulty based on a variety of factors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/csi970/prototype"
+  },
   "main": "app.js",
   "scripts": {
+    "run": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "musicjson": "latest",
+    "xml-to-json": "latest"
   },
   "contributors": [
     {
