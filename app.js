@@ -20,9 +20,9 @@ function Part() {
         }
 
         //Read all measures for the part
-        for (var measureNum in part.measure) {
-            this.measures.push(new Measure(part.measure[measureNum]));
-        }
+        this.measures = asArray(part.measure).map(function(value) {
+            return new Measure(value);
+        });
     };
 };
 
@@ -44,9 +44,9 @@ function Measure(json) {
         }
     }
 
-    for (var noteNum in json.note) {
-        this.notes.push(new Note(json.note[noteNum]));
-    }
+    this.notes = asArray(json.note).map(function(value) {
+        return new Note(value);
+    });
 };
 
 function Note(json) {
@@ -108,11 +108,12 @@ function Score() {
         var partList = asArray(scorePartwise['part-list']['score-part']);
         var partJSON = asArray(scorePartwise.part);
 
-        for(var p in partJSON) {
+        this.parts = partJSON.map(function(value, index) {
             var tempPart = new Part();
-            tempPart.fromJSON(partJSON[p], partList)
-            this.parts.push(tempPart);
-        }
+            tempPart.fromJSON(value, partList);
+            return tempPart;
+        });
+        
         //this.measures = this.parts[0].measures;
         // for (var measureNum in this.parts[0].measure) {
         //     this.measures.push(new Measure(this.parts[0].measure[measureNum]));
@@ -186,13 +187,7 @@ function Score() {
 //Handles cases when single values are not arrays
 //Standardizes handling of xml-to-json values
 function asArray(jsonObj) {
-    if (jsonObj.length !== undefined) {
-        return jsonObj;
-    } else {
-        var temp = [];
-        temp.push(jsonObj);
-        return temp;
-    }
+    return Array.isArray(jsonObj) ? jsonObj : new Array(jsonObj);
 }
 
 (function() {
