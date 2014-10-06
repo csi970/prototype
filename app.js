@@ -54,7 +54,8 @@ function Note(json) {
 
     if (json.rest !== undefined) {
         this.rest = true;
-    } else {
+    }
+    if (json.pitch) {
         this.pitch = {
             'step': json.pitch.step,
             'octave': parseInt(json.pitch.octave, 10)
@@ -102,13 +103,11 @@ function Score() {
     this.fromJSON = function(json) {
         this.raw = json;
         this.parts = [];
-        var partList = json['score-partwise']['part-list'];
-        var partJSON = [];
-        if (typeof json['score-partwise'].part === 'object') {
-            partJSON.push(json['score-partwise'].part);
-        } else {
-            partJSON = json['score-partwise'].part;
-        }
+
+        var scorePartwise = json['score-partwise'];
+        var partList = asArray(scorePartwise['part-list']['score-part']);
+        var partJSON = asArray(scorePartwise.part);
+
         for(var p in partJSON) {
             var tempPart = new Part();
             tempPart.fromJSON(partJSON[p], partList)
@@ -119,6 +118,8 @@ function Score() {
         //     this.measures.push(new Measure(this.parts[0].measure[measureNum]));
         // }
     };
+
+    //TODO: move these 2 functions to the part object?
 
     this.getNumMeasures = function(partNum) {
         return this.parts[partNum].measures.length;
@@ -166,9 +167,11 @@ function Score() {
 
         //Go through each part (could be multiple) and analyze basic indicators
         for(var p in this.parts) {
+            var currPart = this.parts[p];
+            console.log('--------------------------------------');
             console.log('Part Number: ' + (parseInt(p, 10) + 1));
-            console.log('Part Name: ' + this.parts[p].partName);
-            console.log('Instrument Name: ' + this.parts[p].instrument);
+            console.log('Part Name: ' + currPart.partName);
+            console.log('Instrument Name: ' + currPart.instrument);
             var numMeasures = this.getNumMeasures(p);
             console.log('Number of Measures: ' + numMeasures);
             var noteStats = this.getNoteStats(p);
@@ -176,8 +179,21 @@ function Score() {
             console.log('Average Number of Accidentals Per Measure: ' + (noteStats.numAccidentals/numMeasures).toFixed(2));
             console.log('Average Number of Notes Per Measure: ' + (noteStats.numNotes/numMeasures).toFixed(2));
         }
+        console.log('--------------------------------------');
     };
 };
+
+//Handles cases when single values are not arrays
+//Standardizes handling of xml-to-json values
+function asArray(jsonObj) {
+    if (jsonObj.length !== undefined) {
+        return jsonObj;
+    } else {
+        var temp = [];
+        temp.push(jsonObj);
+        return temp;
+    }
+}
 
 (function() {
     x2j({
