@@ -62,6 +62,26 @@ function Part() {
         }
         return stats;
     };
+
+    this.getRange = function() {
+        var minPitch = new Pitch({'step': 'B', 'octave': 20});
+        var maxPitch = new Pitch({'step': 'C', 'octave': -20});
+        this.measures.map(function(measureValue) {
+            measureValue.notes.map(function(noteValue) {
+                if (!noteValue.pitch) {
+                    return;
+                }
+                debugger;
+                if (noteValue.pitch.compareTo(minPitch) === -1) {
+                    minPitch = noteValue.pitch;
+                }
+                if (noteValue.pitch.compareTo(maxPitch) === 1) {
+                    maxPitch = noteValue.pitch;
+                }
+            });
+        });
+        return '' + minPitch + ' to ' + maxPitch;
+    };
 };
 
 function TimeSignature(json) {
@@ -94,13 +114,7 @@ function Note(json) {
         this.rest = true;
     }
     if (json.pitch) {
-        this.pitch = {
-            'step': json.pitch.step,
-            'octave': parseInt(json.pitch.octave, 10)
-        };
-        if (json.pitch.alter) {
-            this.pitch.alter = parseInt(json.pitch.alter, 10);
-        }
+        this.pitch = new Pitch(json.pitch);
     }
 
     if (json.accidental) {
@@ -110,7 +124,7 @@ function Note(json) {
     this.voice = parseInt(json.voice, 10);
 
     this.duration = parseInt(json.duration, 10);
-    this.type = json.type;
+    this.noteType = json.type;
 };
 
 function Key(value) {
@@ -130,6 +144,47 @@ function Key(value) {
         this.accidentalDirection = 1;
         this.accidentals = sharpSequence.substring(0, value).split('');
     }
+};
+
+function Pitch(jsonValue) {
+    var noteNums = 'CDEFGAB';
+    this.stepLetter = jsonValue.step;
+    this.step = noteNums.indexOf(this.stepLetter);
+    this.octave = parseInt(jsonValue.octave, 10);
+
+    if (jsonValue.alter) {
+        this.alter = parseInt(jsonValue.alter, 10);
+    }
+
+    this.compareTo = function(anotherPitch) {
+        if (anotherPitch.step === undefined || anotherPitch.octave === undefined) {
+            return -1;
+        }
+        if (this.octave === anotherPitch.octave) {
+            if (this.step === anotherPitch.step) {
+                var thisAlter = (this.alter ? this.alter : 0);
+                var otherAlter = (anotherPitch.alter ? anotherPitch.alter : 0);
+                if (thisAlter === otherAlter) {
+                    return 0;
+                } else {
+                    return thisAlter < otherAlter ? -1 : 1;
+                }
+            } else {
+                return this.step < anotherPitch.step ? -1 : 1;
+            }
+        } else {
+            return this.octave < anotherPitch.octave ? -1 : 1;
+        }
+    };
+}
+
+Pitch.prototype.toString = function() {
+    var returnString = this.stepLetter;
+    if (this.alter) {
+        returnString += ' ' + (this.alter === 1 ? 'Sharp' : 'Flat');
+    }
+    returnString += this.octave;
+    return returnString;
 };
 
 function Score() {
@@ -177,6 +232,7 @@ function Score() {
             console.log('Number of Notes: ' + rawStats.numNotes);
             console.log('Average Number of Accidentals Per Measure: ' + (rawStats.numAccidentals/numMeasures).toFixed(2));
             console.log('Average Number of Notes Per Measure: ' + (rawStats.numNotes/numMeasures).toFixed(2));
+            console.log('Range: ' + currPart.getRange());
         }
         console.log('--------------------------------------');
     };
