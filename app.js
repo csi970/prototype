@@ -24,6 +24,44 @@ function Part() {
             return new Measure(value);
         });
     };
+
+    this.getNumMeasures = function() {
+        return this.measures.length;
+    };
+
+    this.getRawStats = function() {
+        var currMeasure, currNote, measureNum, noteNum, currKey;
+        var stats = {
+            numNotes: 0,
+            numAccidentals: 0
+        };
+
+        // loop through each measure
+        for (measureNum in this.measures) {
+            currMeasure = this.measures[measureNum];
+            
+            // see if we have a new key for this measure
+            // if(currMeasure.key) {
+            //     currKey = currMeasure.key;
+            // }
+
+            // loop through each note
+            for(noteNum in currMeasure.notes) {
+                currNote = currMeasure.notes[noteNum];
+
+                // increment total notes
+                if(!currNote.rest) {
+                    stats.numNotes++;
+                }
+
+                // increment accidentals
+                if (currNote.accidental) {
+                    stats.numAccidentals++;
+                }
+            }
+        }
+        return stats;
+    };
 };
 
 function TimeSignature(json) {
@@ -120,46 +158,6 @@ function Score() {
         // }
     };
 
-    //TODO: move these 2 functions to the part object?
-
-    this.getNumMeasures = function(partNum) {
-        return this.parts[partNum].measures.length;
-    };
-
-    this.getNoteStats = function(partNum) {
-        var currMeasure, currNote, measureNum, noteNum, currKey;
-        var stats = {
-            numNotes: 0,
-            numAccidentals: 0
-        };
-
-        // loop through each note
-        for (measureNum in this.parts[partNum].measures) {
-            currMeasure = this.parts[partNum].measures[measureNum];
-            
-            // see if we have a new key for this measure
-            if(currMeasure.key) {
-                currKey = currMeasure.key;
-            }
-
-            // loop through each note
-            for(noteNum in currMeasure.notes) {
-                currNote = currMeasure.notes[noteNum];
-
-                // increment total notes
-                if(!currNote.rest) {
-                    stats.numNotes++;
-                }
-
-                // increment accidentals
-                if (currNote.accidental) {
-                    stats.numAccidentals++;
-                }
-            }
-        }
-        return stats;
-    };
-
     this.process = function() {
         // console.log(this.raw);
         // console.log(this.parts);
@@ -173,12 +171,12 @@ function Score() {
             console.log('Part Number: ' + (parseInt(p, 10) + 1));
             console.log('Part Name: ' + currPart.partName);
             console.log('Instrument Name: ' + currPart.instrument);
-            var numMeasures = this.getNumMeasures(p);
+            var numMeasures = currPart.getNumMeasures(p);
             console.log('Number of Measures: ' + numMeasures);
-            var noteStats = this.getNoteStats(p);
-            console.log('Number of Notes: ' + noteStats.numNotes);
-            console.log('Average Number of Accidentals Per Measure: ' + (noteStats.numAccidentals/numMeasures).toFixed(2));
-            console.log('Average Number of Notes Per Measure: ' + (noteStats.numNotes/numMeasures).toFixed(2));
+            var rawStats = currPart.getRawStats(p);
+            console.log('Number of Notes: ' + rawStats.numNotes);
+            console.log('Average Number of Accidentals Per Measure: ' + (rawStats.numAccidentals/numMeasures).toFixed(2));
+            console.log('Average Number of Notes Per Measure: ' + (rawStats.numNotes/numMeasures).toFixed(2));
         }
         console.log('--------------------------------------');
     };
