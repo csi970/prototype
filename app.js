@@ -30,10 +30,12 @@ function Part() {
     };
 
     this.getRawStats = function() {
-        var currMeasure, currNote, measureNum, noteNum, currKey;
+        var currMeasure, currNote, measureNum, noteNum, currKey, currTime;
         var stats = {
             numNotes: 0,
-            numAccidentals: 0
+            numAccidentals: 0,
+            keyUsage: [],
+            timeSigUsage: []
         };
 
         // loop through each measure
@@ -41,9 +43,24 @@ function Part() {
             currMeasure = this.measures[measureNum];
             
             // see if we have a new key for this measure
-            // if(currMeasure.key) {
-            //     currKey = currMeasure.key;
-            // }
+            if (currMeasure.key) {
+                currKey = currMeasure.key;
+            }
+            if (stats.keyUsage[currKey]) {
+                stats.keyUsage[currKey]++;
+            } else {
+                stats.keyUsage[currKey] = 1;
+            }
+
+            // see if we have a new time signature for this measure
+            if (currMeasure.timeSignature) {
+                currTime = currMeasure.timeSignature;
+            }
+            if (stats.timeSigUsage[currTime]) {
+                stats.timeSigUsage[currTime]++;
+            } else {
+                stats.timeSigUsage[currTime] = 1;
+            }
 
             // loop through each note
             for(noteNum in currMeasure.notes) {
@@ -88,6 +105,10 @@ function TimeSignature(json) {
     this.numBeats = parseInt(json.beats, 10);
     this.beatType = parseInt(json['beat-type'], 10);
     //this.tempo = null;
+};
+
+TimeSignature.prototype.toString = function() {
+    return '' + this.numBeats + '/' + this.beatType;
 };
 
 function Measure(json) {
@@ -143,6 +164,16 @@ function Key(value) {
     } else if (value > 0) {
         this.accidentalDirection = 1;
         this.accidentals = sharpSequence.substring(0, value).split('');
+    }
+};
+
+Key.prototype.toString = function() {
+    if (this.value === 0) {
+        return 'Natural';
+    } else if (this.value < 0) {
+        return '' + -parseInt(this.value, 10) + ' Flat';
+    } else {
+        return '' + parseInt(this.value, 10) + ' Sharp';
     }
 };
 
@@ -229,10 +260,19 @@ function Score() {
             var numMeasures = currPart.getNumMeasures(p);
             console.log('Number of Measures: ' + numMeasures);
             var rawStats = currPart.getRawStats(p);
+            // console.log(rawStats);
             console.log('Number of Notes: ' + rawStats.numNotes);
             console.log('Average Number of Accidentals Per Measure: ' + (rawStats.numAccidentals/numMeasures).toFixed(2));
             console.log('Average Number of Notes Per Measure: ' + (rawStats.numNotes/numMeasures).toFixed(2));
             console.log('Range: ' + currPart.getRange());
+            console.log('Key Signature Usage Percentages:');
+            for(var keyId in rawStats.keyUsage) {
+                console.log('  ' + keyId + '\t' + ((rawStats.keyUsage[keyId]/numMeasures) * 100).toFixed(2) + '%');
+            }
+            console.log('Time Signature Usage Percentages:');
+            for(var timeId in rawStats.timeSigUsage) {
+                console.log('  ' + timeId + '\t' + ((rawStats.timeSigUsage[timeId]/numMeasures) * 100).toFixed(2) + '%');
+            }
         }
         console.log('--------------------------------------');
     };
