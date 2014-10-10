@@ -1,6 +1,14 @@
 var x2j = require('xml-to-json');
 var fs = require('fs');
 
+var Normal = {
+    notes_per_measure: 6,
+    accidentals_per_measure: 0.4,
+    range_per_part: 20,
+    time_changes_per_part: 1,
+    key_changes_per_part: 1
+};
+
 function Part() {
     this.measures = [];
     this.partId = null;
@@ -32,10 +40,15 @@ function Part() {
     this.getRawStats = function() {
         var currMeasure, currNote, measureNum, noteNum, currKey, currTime;
         var stats = {
+            numChords: 0,
             numNotes: 0,
             numAccidentals: 0,
+            numMeasures: this.getNumMeasures(),
             keyUsage: [],
-            timeSigUsage: []
+            keyChanges: 0,
+            timeSigUsage: [],
+            timeChanges: 0,
+            range: this.getRange()
         };
 
         // loop through each measure
@@ -45,6 +58,7 @@ function Part() {
             // see if we have a new key for this measure
             if (currMeasure.key) {
                 currKey = currMeasure.key;
+                stats.keyChanges++;
             }
             if (stats.keyUsage[currKey]) {
                 stats.keyUsage[currKey]++;
@@ -55,6 +69,7 @@ function Part() {
             // see if we have a new time signature for this measure
             if (currMeasure.timeSignature) {
                 currTime = currMeasure.timeSignature;
+                stats.timeChanges++;
             }
             if (stats.timeSigUsage[currTime]) {
                 stats.timeSigUsage[currTime]++;
@@ -63,41 +78,72 @@ function Part() {
             }
 
             // loop through each note
-            for(noteNum in currMeasure.notes) {
-                currNote = currMeasure.notes[noteNum];
+            for(chordNum in currMeasure.chords) {
+                currChord = currMeasure.chords[chordNum];
 
                 // increment total notes
-                if(!currNote.rest) {
-                    stats.numNotes++;
-                }
-
-                // increment accidentals
-                if (currNote.accidental) {
-                    stats.numAccidentals++;
+                if(!currChord.rest) {
+                    stats.numChords++;
+                    currChord.notes.map(function (noteValue) {
+                        if (noteValue.accidental) {
+                            stats.numAccidentals++;
+                        }
+                    });
+                    stats.numNotes += currChord.notes.length;
                 }
             }
         }
         return stats;
     };
 
+    this.getDifficulty = function() {
+        var stats = this.getRawStats();
+        var range = stats.range;
+        var numMeasures = stats.numMeasures;
+        var num_metrics = 0;
+
+        // Notes per measure
+        var difficulty = stats.numNotes / numMeasures / Normal.notes_per_measure;
+        num_metrics++;
+
+        // Accidentals per measure
+        difficulty += stats.numAccidentals / numMeasures / Normal.accidentals_per_measure;
+        num_metrics++;
+
+        // Key signature changes per part
+        difficulty += stats.keyChanges / Normal.key_changes_per_part;
+        num_metrics++;
+
+        // Time signature changes per part
+        difficulty += stats.timeChanges / Normal.time_changes_per_part;
+        num_metrics++;
+
+        // Range
+        difficulty += (range.maxPitch.value - range.minPitch.value) / Normal.range_per_part;
+        num_metrics++;
+        
+        return difficulty / num_metrics;
+    };
+
     this.getRange = function() {
         var minPitch = new Pitch({'step': 'B', 'octave': 20});
         var maxPitch = new Pitch({'step': 'C', 'octave': -20});
         this.measures.map(function(measureValue) {
-            measureValue.notes.map(function(noteValue) {
-                if (!noteValue.pitch) {
-                    return;
+            measureValue.chords.forEach(function(chordValue) {
+                var highNote = chordValue.highestNote(),
+                    lowNote = chordValue.lowestNote();
+                if (lowNote.pitch && lowNote.pitch.value < minPitch.value) {
+                    minPitch = lowNote.pitch;
                 }
-                debugger;
-                if (noteValue.pitch.compareTo(minPitch) === -1) {
-                    minPitch = noteValue.pitch;
-                }
-                if (noteValue.pitch.compareTo(maxPitch) === 1) {
-                    maxPitch = noteValue.pitch;
+                if (highNote.pitch && highNote.pitch.value > maxPitch.value) {
+                    maxPitch = highNote.pitch;
                 }
             });
         });
-        return '' + minPitch + ' to ' + maxPitch;
+        return {
+            'minPitch': minPitch,
+            'maxPitch': maxPitch
+        };
     };
 };
 
@@ -112,7 +158,7 @@ TimeSignature.prototype.toString = function() {
 };
 
 function Measure(json) {
-    this.notes = new Array();
+    this.chords = new Array();
 
     if (json.attributes) {
         if (json.attributes.key) {
@@ -123,10 +169,46 @@ function Measure(json) {
         }
     }
 
-    this.notes = asArray(json.note).map(function(value) {
-        return new Note(value);
-    });
+    asArray(json.note).map(function(value, index) {
+        if (value.chord === undefined) {
+            var ch = new Chord();
+            ch.addNote(new Note(value));
+            this.chords.push(ch);
+        } else {
+            //Add the current note to the last chord encountered
+            this.chords[this.chords.length - 1].addNote(new Note(json.note));
+        }
+    }, this);
 };
+
+function Chord() {
+    this.notes = [];
+    this.rest = false;
+
+    this.addNote = function(note) {
+        this.notes.push(note);
+        if (note.rest) {
+            this.rest = true;
+        } else {
+            this.notes.sort(function (a, b) {
+                return a.value - b.value;
+            });
+        }
+        return this;
+    };
+
+    this.getRange = function() {
+        return this.highestNote().value - this.lowestNote().value;
+    };
+
+    this.lowestNote = function() {
+        return this.notes[0];
+    };
+
+    this.highestNote = function() {
+        return this.notes[this.notes.length - 1];
+    }
+}
 
 function Note(json) {
     this.rest = false;
@@ -178,36 +260,17 @@ Key.prototype.toString = function() {
 };
 
 function Pitch(jsonValue) {
-    var noteNums = 'CDEFGAB';
+    var noteNums = 'C.D.EF.G.A.B';
     this.stepLetter = jsonValue.step;
     this.step = noteNums.indexOf(this.stepLetter);
     this.octave = parseInt(jsonValue.octave, 10);
+    this.value = this.octave * 12 + this.step;
 
     if (jsonValue.alter) {
         this.alter = parseInt(jsonValue.alter, 10);
+        this.value += this.alter;
     }
-
-    this.compareTo = function(anotherPitch) {
-        if (anotherPitch.step === undefined || anotherPitch.octave === undefined) {
-            return -1;
-        }
-        if (this.octave === anotherPitch.octave) {
-            if (this.step === anotherPitch.step) {
-                var thisAlter = (this.alter ? this.alter : 0);
-                var otherAlter = (anotherPitch.alter ? anotherPitch.alter : 0);
-                if (thisAlter === otherAlter) {
-                    return 0;
-                } else {
-                    return thisAlter < otherAlter ? -1 : 1;
-                }
-            } else {
-                return this.step < anotherPitch.step ? -1 : 1;
-            }
-        } else {
-            return this.octave < anotherPitch.octave ? -1 : 1;
-        }
-    };
-}
+};
 
 Pitch.prototype.toString = function() {
     var returnString = this.stepLetter;
@@ -257,22 +320,26 @@ function Score() {
             console.log('Part Number: ' + (parseInt(p, 10) + 1));
             console.log('Part Name: ' + currPart.partName);
             console.log('Instrument Name: ' + currPart.instrument);
-            var numMeasures = currPart.getNumMeasures(p);
-            console.log('Number of Measures: ' + numMeasures);
-            var rawStats = currPart.getRawStats(p);
-            // console.log(rawStats);
-            console.log('Number of Notes: ' + rawStats.numNotes);
-            console.log('Average Number of Accidentals Per Measure: ' + (rawStats.numAccidentals/numMeasures).toFixed(2));
-            console.log('Average Number of Notes Per Measure: ' + (rawStats.numNotes/numMeasures).toFixed(2));
-            console.log('Range: ' + currPart.getRange());
+            // var numMeasures = currPart.getNumMeasures(p);
+            // console.log('Number of Measures: ' + numMeasures);
+            var rawStats = currPart.getRawStats();
+            console.log(rawStats);
+            // console.log('Number of Notes: ' + rawStats.numNotes);
+            console.log('Average Number of Accidentals Per Measure: ' + (rawStats.numAccidentals / rawStats.numMeasures).toFixed(2));
+            console.log('Average Number of Notes Per Measure: ' + (rawStats.numNotes / rawStats.numMeasures).toFixed(2));
+            console.log('Average Number of Notes Per Chord: ' + (rawStats.numNotes / rawStats.numChords).toFixed(2));
+            var range = currPart.getRange();
+            // console.log('Range: ' + range.minPitch + ' to ' + range.maxPitch);
             console.log('Key Signature Usage Percentages:');
             for(var keyId in rawStats.keyUsage) {
-                console.log('  ' + keyId + '\t' + ((rawStats.keyUsage[keyId]/numMeasures) * 100).toFixed(2) + '%');
+                console.log('  ' + keyId + '\t' + ((rawStats.keyUsage[keyId]/rawStats.numMeasures) * 100).toFixed(2) + '%');
             }
             console.log('Time Signature Usage Percentages:');
             for(var timeId in rawStats.timeSigUsage) {
-                console.log('  ' + timeId + '\t' + ((rawStats.timeSigUsage[timeId]/numMeasures) * 100).toFixed(2) + '%');
+                console.log('  ' + timeId + '\t' + ((rawStats.timeSigUsage[timeId]/rawStats.numMeasures) * 100).toFixed(2) + '%');
             }
+
+            console.log('Difficulty: ' + currPart.getDifficulty());
         }
         console.log('--------------------------------------');
     };
@@ -286,7 +353,7 @@ function asArray(jsonObj) {
 
 (function() {
     x2j({
-        input: 'score.xml',
+        input: 'multipartscore.xml',
         output: null
     }, function(err, json) {
         if (err) {
