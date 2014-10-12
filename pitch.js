@@ -14,7 +14,7 @@ var Pitch = function Pitch(jsonValue) {
 Pitch.prototype.toString = function() {
     var returnString = this.stepLetter;
     if (this.alter) {
-        returnString += ' ' + (this.alter === 1 ? 'Sharp' : 'Flat');
+        returnString += ' ' + (this.alter === 1 ? 'Sharp ' : 'Flat ');
     }
     returnString += this.octave;
     return returnString;

@@ -2,7 +2,11 @@ var Pitch = require('./pitch');
 
 var Note = function(json) {
     this.rest = false;
-
+    this.grace = false;
+    this.voice = parseInt(json.voice, 10);
+    this.duration = parseInt(json.duration, 10);
+    this.noteType = json.type;
+    
     if (json.rest !== undefined) {
         this.rest = true;
     }
@@ -15,10 +19,9 @@ var Note = function(json) {
         this.accidental = json.accidental;
     }
 
-    this.voice = parseInt(json.voice, 10);
-
-    this.duration = parseInt(json.duration, 10);
-    this.noteType = json.type;
+    if (json.grace) {
+        this.grace = true;
+    }
 };
 
 module.exports = Note;

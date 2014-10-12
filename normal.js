@@ -2,10 +2,10 @@
 // The values can be tweaked to adjust the relative difficulty of a Part.
 var normal = {
     notes_per_measure: 6,
-    accidentals_per_measure: 0.4,
-    range_per_part: 20,
-    time_changes_per_part: 1,
-    key_changes_per_part: 1
+    accidentals_per_measure: 1/5,
+    range: 20,
+    time_changes_per_measure: 1/20,
+    key_changes_per_measure: 1/10
 };
 
 module.exports = normal;

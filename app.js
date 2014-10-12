@@ -1,17 +1,17 @@
-var x2j = require('xml-to-json');
-var fs = require('fs');
+var xml2json = require('xml-to-json');
 
 var Score = require('./score');
 
-x2j({
-    input: 'reunion.xml',
+var file = process.argv[2] || 'testScore.xml';
+
+xml2json({
+    input: file,
     output: null
 }, function(err, json) {
     if (err) {
         console.error('Error parsing MusicXML: ' + err);
     } else {
-        var s = new Score();
-        s.fromJSON(json);
+        var s = new Score(json);
         s.process();
     }
 });
