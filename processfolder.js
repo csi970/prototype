@@ -1,7 +1,11 @@
 var xml2json = require('xml-to-json'),
     fs = require('fs');
     Score = require('./score'),
-    folder = process.argv[2];
+    folder = process.argv[2],
+    today = new Date(),
+    statsFileName = '';
+
+statsFileName = '' + today.getUTCFullYear() + '-' + today.getUTCMonth() + '-' + today.getUTCDate() + '.csv';
 
 var processFolder = function (currDir, currObj) {
     var filePath, fileStats;
@@ -46,7 +50,14 @@ var processFile = function (currDir, currFile) {
         } else {
             console.log(currFile);
             var s = new Score(json);
-            s.process();
+            var processedString = s.processToCSVString(currFile);
+            try {
+                outputStats = fs.statSync(statsFileName);
+            } catch (fileErr) {
+                fs.writeFileSync(statsFileName, s.CSVHeader + '\n');
+            } finally {
+                fs.appendFileSync(statsFileName, processedString)
+            }
         }
     });
 }

@@ -40,8 +40,7 @@ var Score = function(json) {
             console.log('Average Number of Accidentals Per Measure: ' + (rawStats.numAccidentals / rawStats.numMeasures).toFixed(2));
             console.log('Average Number of Chords Per Measure: ' + (rawStats.numChords / rawStats.numMeasures).toFixed(2));
             console.log('Average Number of Notes Per Chord: ' + (rawStats.numNotes / rawStats.numChords).toFixed(2));
-            var range = currPart.getRange();
-            console.log('Range: ' + range.minPitch + ' to ' + range.maxPitch);
+            console.log('Range: ' + rawStats.range.minPitch + ' to ' + rawStats.range.maxPitch);
             console.log('Key Signature Usage Percentages:');
             for(var keyId in rawStats.keyUsage) {
                 console.log('  ' + keyId + '\t' + ((rawStats.keyUsage[keyId]/rawStats.numMeasures) * 100).toFixed(2) + '%');
@@ -57,6 +56,30 @@ var Score = function(json) {
         }
         console.log('--------------------------------------');
     };
+
+    this.processToCSVString = function(fileName) {
+        var finalString = '',
+            cleanedFileName = fileName.replace(/,/g, '').replace(/.xml/g, '').replace(/_/g, ' ');
+        this.parts.forEach(function (currPart, partIndex) {
+            var rawStats = currPart.getRawStats();
+            finalString += cleanedFileName;
+            finalString += ',' + (partIndex + 1);
+            finalString += ',' + currPart.partName;
+            finalString += ',' + currPart.instrument;
+            finalString += ',' + rawStats.numMeasures;
+            finalString += ',' + rawStats.numChords;
+            finalString += ',' + rawStats.numNotes;
+            finalString += ',' + rawStats.numAccidentals;
+            finalString += ',' + rawStats.numGraceNotes;
+            finalString += ',' + rawStats.range.minPitch;
+            finalString += ',' + rawStats.range.maxPitch;
+            finalString += ',' + rawStats.totalSound;
+            finalString += '\n';
+        });
+        return finalString;
+    };
+
+    this.CSVHeader = 'Score File Name,Part Number,Part Name,Instrument Name,Number of Measures,Number of Chords,Number of Notes,Number of Accidentals,Number of Grace Notes,Minimum Note,Maximum Note,Total Sound';
 };
 
 module.exports = Score;
