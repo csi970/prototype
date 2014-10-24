@@ -5,7 +5,7 @@ var xml2json = require('xml-to-json'),
     today = new Date(),
     statsFileName = '';
 
-statsFileName = '' + today.getUTCFullYear() + '-' + today.getUTCMonth() + '-' + today.getUTCDate() + '.csv';
+statsFileName = '' + today.getUTCFullYear() + '-' + (today.getUTCMonth() + 1) + '-' + today.getUTCDate() + '.csv';
 
 var processFolder = function (currDir, currObj) {
     var filePath, fileStats;

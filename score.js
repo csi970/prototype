@@ -13,11 +13,6 @@ var Score = function(json) {
         var tempPart = new Part(value, partList);
         return tempPart;
     });
-    
-    //this.measures = this.parts[0].measures;
-    // for (var measureNum in this.parts[0].measure) {
-    //     this.measures.push(new Measure(this.parts[0].measure[measureNum]));
-    // }
 
     this.process = function() {
         // console.log(this.raw);

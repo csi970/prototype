@@ -4,6 +4,7 @@ var Pitch = require('./pitch'),
     Measure = require('./measure');
 
 var Part = function Part(part, partList) {
+    this.calculatedStats = null;
     this.partId = part['$'].id;
 
     //Get the part name and the instrument name from the part-list object
@@ -16,8 +17,13 @@ var Part = function Part(part, partList) {
     }
 
     //Read all measures for the part
+    var prevDivisions = null;
     this.measures = Util.asArray(part.measure).map(function(value) {
-        return new Measure(value);
+        var meas = new Measure(value, prevDivisions);
+        if (meas.divisions) {
+            prevDivisions = meas.divisions;
+        }
+        return meas;
     });
 
     this.getNumMeasures = function() {
@@ -25,15 +31,20 @@ var Part = function Part(part, partList) {
     };
 
     this.getRawStats = function() {
+        if (this.calculatedStats) {
+            return this.calculatedStats;
+        }
         var currMeasure,
             currNote,
             measureNum,
             chordNum,
             currKey,
-            currDivisions,
-            currTime;
+            currTime,
+            currMeasureStats;
 
         var stats = {
+            numRests: 0,
+
             // This stores the number of chords (which may contain multiple notes)
             numChords: 0,
 
@@ -66,6 +77,9 @@ var Part = function Part(part, partList) {
             // Sum of the durations of all the notes, in quarter notes
             totalSound: 0,
 
+            // Sum of the durations of all the rests, in quarter notes
+            totalRest: 0,
+
             // Distance between highest and lowest note
             range: this.getRange()
         };
@@ -73,6 +87,16 @@ var Part = function Part(part, partList) {
         // loop through each measure
         for (measureNum in this.measures) {
             currMeasure = this.measures[measureNum];
+            currMeasureStats = currMeasure.measureStats;
+
+            // Increment total chords, rests, notes
+            stats.numChords += currMeasureStats.numChords;
+            stats.numRests += currMeasureStats.numRests;
+            stats.numNotes += currMeasureStats.numNotes;
+            stats.numGraceNotes += currMeasureStats.numGraceNotes;
+            stats.numAccidentals += currMeasureStats.numAccidentals;
+            stats.totalSound += currMeasureStats.noteLength;
+            stats.totalRest += currMeasureStats.restLength;
             
             // see if we have a new key for this measure
             if (currMeasure.keySignature) {
@@ -99,46 +123,9 @@ var Part = function Part(part, partList) {
             } else {
                 stats.timeSigUsage[currTime] = 1;
             }
-
-            // see if we have a new division for this measure
-            if (currMeasure.divisions) {
-                currDivisions = currMeasure.divisions;
-            }
-
-            // loop through each note
-            for(chordNum in currMeasure.chords) {
-                currChord = currMeasure.chords[chordNum];
-
-                // Only process non-rests (notes)
-                if(!currChord.rest) {
-
-                    // Increment total chords
-                    stats.numChords++;
-
-                    // Apply to each note
-                    currChord.notes.map(function (noteValue) {
-
-                        // Increment accidentals if appropriate
-                        if (noteValue.accidental) {
-                            stats.numAccidentals++;
-                        }
-
-                        // Increment grace notes if appropriate
-                        if (noteValue.grace) {
-                            stats.numGraceNotes++;
-                        }
-
-                        // Increment total playing time
-                        stats.totalSound += noteValue.duration / currDivisions;
-
-                    });
-
-                    // Increment total notes
-                    stats.numNotes += currChord.notes.length;
-                }
-            }
         }
-        return stats;
+        this.calculatedStats = stats;
+        return this.calculatedStats;
     };
 
     this.getDifficulty = function() {
@@ -173,14 +160,17 @@ var Part = function Part(part, partList) {
     this.getRange = function() {
         var minPitch = new Pitch({'step': 'B', 'octave': 20});
         var maxPitch = new Pitch({'step': 'C', 'octave': -20});
-        this.measures.map(function(measureValue) {
+        this.measures.forEach(function(measureValue) {
             measureValue.chords.forEach(function(chordValue) {
+                if (chordValue.rest) {
+                    return;
+                }
                 var highNote = chordValue.highestNote(),
                     lowNote = chordValue.lowestNote();
-                if (lowNote.pitch && lowNote.pitch.value < minPitch.value) {
+                if (lowNote.pitch.value < minPitch.value) {
                     minPitch = lowNote.pitch;
                 }
-                if (highNote.pitch && highNote.pitch.value > maxPitch.value) {
+                if (highNote.pitch.value > maxPitch.value) {
                     maxPitch = highNote.pitch;
                 }
             });
