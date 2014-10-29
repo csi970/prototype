@@ -48,6 +48,8 @@ var Score = function(json) {
             console.log('Average note duration: ' + rawStats.totalSound / rawStats.numNotes + ' quarter notes');
 
             console.log('Difficulty: ' + currPart.getDifficulty());
+            console.log('Measure Difficulties:');
+            currPart.generateMeasureHeatMap();
         }
         console.log('--------------------------------------');
     };

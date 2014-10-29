@@ -128,33 +128,54 @@ var Part = function Part(part, partList) {
         return this.calculatedStats;
     };
 
+    this.generateMeasureHeatMap = function() {
+        var partStats = this.getRawStats(),
+            measureDifficulties = [],
+            partDifficulty;
+
+        partDifficulty = Util.calculateDifficulty(partStats, true);
+
+        // loop through each measure
+        for (measureNum in this.measures) {
+            currMeasure = this.measures[measureNum];
+            currMeasureStats = currMeasure.measureStats;
+            measureDifficulties.push(Util.calculateDifficulty(currMeasureStats, false));
+        }
+
+        // Standard deviation and then label each measure according to # of standard deviations away
+
+        console.log(measureDifficulties);
+    };
+
     this.getDifficulty = function() {
-        var stats = this.getRawStats();
-        var range = stats.range;
-        var numMeasures = stats.numMeasures;
-        var num_metrics = 0;
+        // var stats = this.getRawStats();
+        // var range = stats.range;
+        // var numMeasures = stats.numMeasures;
+        // var num_metrics = 0;
 
-        // Notes per measure
-        var difficulty = stats.numNotes / numMeasures / Normal.notes_per_measure;
-        num_metrics++;
+        // // Notes per measure
+        // var difficulty = stats.numNotes / numMeasures / Normal.notes_per_measure;
+        // num_metrics++;
 
-        // Accidentals per measure
-        difficulty += stats.numAccidentals / numMeasures / Normal.accidentals_per_measure;
-        num_metrics++;
+        // // Accidentals per measure
+        // difficulty += stats.numAccidentals / numMeasures / Normal.accidentals_per_measure;
+        // num_metrics++;
 
-        // Key signature changes per part
-        difficulty += stats.keyChanges / numMeasures / Normal.key_changes_per_measure;
-        num_metrics++;
+        // // Key signature changes per part
+        // difficulty += stats.keyChanges / numMeasures / Normal.key_changes_per_measure;
+        // num_metrics++;
 
-        // Time signature changes per part
-        difficulty += stats.timeChanges / numMeasures / Normal.time_changes_per_measure;
-        num_metrics++;
+        // // Time signature changes per part
+        // difficulty += stats.timeChanges / numMeasures / Normal.time_changes_per_measure;
+        // num_metrics++;
 
-        // Range
-        difficulty += (range.maxPitch.value - range.minPitch.value) / Normal.range;
-        num_metrics++;
+        // // Range
+        // difficulty += (range.maxPitch.value - range.minPitch.value) / Normal.range;
+        // num_metrics++;
         
-        return difficulty / num_metrics;
+        // return difficulty / num_metrics;
+        var difficulty = Util.calculateDifficulty(this.getRawStats(), true);
+        return difficulty;
     };
 
     this.getRange = function() {

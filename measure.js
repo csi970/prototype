@@ -2,7 +2,8 @@ var Chord = require('./chord'),
     Util = require('./util'),
     KeySignature = require('./keysignature'),
     TimeSignature = require('./timeSignature'),
-    Note = require('./note');
+    Note = require('./note'),
+    Pitch = require('./pitch');
 
 var Measure = function(json, prevDivisions) {
     this.chords = new Array();
@@ -16,7 +17,8 @@ var Measure = function(json, prevDivisions) {
         numChords: 0,
         numNotes: 0,
         noteLength: 0,
-        restLength: 0
+        restLength: 0,
+        range: {}
     };
 
     // Fill in attributes if we can
@@ -71,6 +73,29 @@ var Measure = function(json, prevDivisions) {
         }
     }, this);
     this.measureStats.numChords += this.chords.length - this.measureStats.numRests;
+
+    var minPitch = new Pitch({'step': 'B', 'octave': 20});
+    var maxPitch = new Pitch({'step': 'C', 'octave': -20});
+    this.chords.forEach(function(chord) {
+        if (chord.rest) {
+            return;
+        }
+        var highNote = chord.highestNote(),
+            lowNote = chord.lowestNote();
+        if (lowNote.pitch.value < minPitch.value) {
+            minPitch = lowNote.pitch;
+        }
+        if (highNote.pitch.value > maxPitch.value) {
+            maxPitch = highNote.pitch;
+        }
+    });
+    if (minPitch.value > 200 && maxPitch.value < 0) {
+        this.measureStats.range.maxPitch = new Pitch({'step': 'C', 'octave': 0});
+        this.measureStats.range.minPitch = new Pitch({'step': 'C', 'octave': 0});
+    } else {
+        this.measureStats.range.maxPitch = maxPitch;
+        this.measureStats.range.minPitch = minPitch;
+    }
 };
 
 module.exports = Measure;
