@@ -1,6 +1,7 @@
 var Util = require('./util'),
     Measure = require('./measure'),
-    Section = require('./section');
+    Section = require('./section'),
+    numbers = require('numbers');
 
 var Part = function Part(part, partList) {
     this.calculatedStats = null;
@@ -122,7 +123,7 @@ var Part = function Part(part, partList) {
             stats.numAccidentals += currMeasureStats.numAccidentals;
             stats.totalSound += currMeasureStats.noteLength;
             stats.totalRest += currMeasureStats.restLength;
-            
+
             // see if we have a new key for this measure
             if (currMeasure.keySignature !== currKey) {
                 currKey = currMeasure.keySignature;
@@ -164,22 +165,33 @@ var Part = function Part(part, partList) {
     };
 
     this.generateMeasureHeatMap = function() {
-        var partStats = this.getRawStats(),
-            measureDifficulties = [],
-            partDifficulty;
-
-        partDifficulty = Util.calculateDifficulty(partStats, true);
+        var measureDifficulties = [],
+            measureDeviance = [],
+            averageDifficulty,
+            halfSD;
 
         // loop through each measure
-        for (measureNum in this.measures) {
-            currMeasure = this.measures[measureNum];
+        this.measures.forEach(function (currMeasure) {
             currMeasureStats = currMeasure.measureStats;
             measureDifficulties.push(Util.calculateDifficulty(currMeasureStats, false));
-        }
+        });
 
-        // Standard deviation and then label each measure according to # of standard deviations away
+        averageDifficulty = numbers.statistic.mean(measureDifficulties);
+        halfSD = numbers.statistic.standardDev(measureDifficulties)/2;
+
+        measureDeviance = measureDifficulties.map(function(value) {
+            if (value > (averageDifficulty + halfSD)) {
+                return "harder";
+            } else if (value < (averageDifficulty - halfSD)) {
+                return "easier";
+            } else {
+                return "average";
+            }
+        });
 
         console.log(measureDifficulties);
+        console.log("Average Difficulty: " + averageDifficulty + "\nHalf Standard Deviation: " + halfSD);
+        console.log(measureDeviance);
     };
 
     this.getDifficulty = function() {

@@ -14,7 +14,8 @@
   "dependencies": {
     "musicjson": "latest",
     "mysql": "latest",
-    "xml-to-json": "latest"
+    "xml-to-json": "latest",
+    "numbers": "latest"
   },
   "contributors": [
     {
