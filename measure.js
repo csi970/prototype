@@ -10,6 +10,8 @@ var Measure = function(json, prevDivisions) {
     this.divisions = prevDivisions;
     this.keySignature = null;
     this.timeSignature = null;
+    this.leftBarline = null;
+    this.rightBarline = null;
     this.measureStats = {
         numAccidentals: 0,
         numGraceNotes: 0,
@@ -37,6 +39,14 @@ var Measure = function(json, prevDivisions) {
         // Divisions
         if (json.attributes.divisions) {
             this.divisions = parseInt(json.attributes.divisions,10);
+        }
+    }
+
+    if (json.barline) {
+        if (json.barline['$'].location === 'right') {
+            this.rightBarline = json.barline['bar-style'];
+        } else {
+            this.leftBarline = json.barline['bar-style'];
         }
     }
 

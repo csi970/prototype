@@ -1,7 +1,8 @@
 var Pitch = require('./pitch'),
     Util = require('./util'),
     Normal = require('./normal'),
-    Measure = require('./measure');
+    Measure = require('./measure'),
+    Section = require('./section');
 
 var Part = function Part(part, partList) {
     this.calculatedStats = null;
@@ -18,13 +19,30 @@ var Part = function Part(part, partList) {
 
     //Read all measures for the part
     var prevDivisions = null;
-    this.measures = Util.asArray(part.measure).map(function(value) {
+    var firstSection = new Section();
+    this.sections = [firstSection];
+    this.measures = Util.asArray(part.measure).map(function(value, index) {
         var meas = new Measure(value, prevDivisions);
         if (meas.divisions) {
             prevDivisions = meas.divisions;
         }
+        if (meas.leftBarline) {
+            var section = new Section();
+            this.sections.push(section);
+        }
+        this.sections[this.sections.length - 1].addMeasure(meas, index);
+        if (meas.rightBarline) {
+            var section = new Section();
+            this.sections.push(section);
+        }
         return meas;
-    });
+    }, this);
+
+    if (this.sections[this.sections.length - 1].getLength() === 0) {
+        this.sections.splice(this.sections.length - 1, 1);
+    }
+
+    console.log(this.sections);
 
     this.getNumMeasures = function() {
         return this.measures.length;
