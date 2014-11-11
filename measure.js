@@ -41,7 +41,7 @@ var Measure = function(json, prevDivisions) {
         }
     }
 
-    if (json.barline) {
+    if (json.barline && json.barline['bar-style']) {
         if (json.barline['$'].location === 'right') {
             this.rightBarline = json.barline['bar-style'];
         } else {
