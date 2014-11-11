@@ -42,8 +42,6 @@ var Part = function Part(part, partList) {
         this.sections.splice(this.sections.length - 1, 1);
     }
 
-    console.log(this.sections);
-
     this.getNumMeasures = function() {
         return this.measures.length;
     };
@@ -146,6 +144,16 @@ var Part = function Part(part, partList) {
         return this.calculatedStats;
     };
 
+    this.generateSectionHeatMap = function() {
+        var sectionDifficulties = [];
+
+        sectionDifficulties = this.sections.map(function (section) {
+            return Util.calculateDifficulty(section.sectionStats, false);
+        });
+
+        console.log(sectionDifficulties);
+    };
+
     this.generateMeasureHeatMap = function() {
         var partStats = this.getRawStats(),
             measureDifficulties = [],
@@ -200,19 +208,15 @@ var Part = function Part(part, partList) {
         var minPitch = new Pitch({'step': 'B', 'octave': 20});
         var maxPitch = new Pitch({'step': 'C', 'octave': -20});
         this.measures.forEach(function(measureValue) {
-            measureValue.chords.forEach(function(chordValue) {
-                if (chordValue.rest) {
-                    return;
+            var measureRange = measureValue.measureStats.range;
+            if (measureRange.maxPitch && measureRange.minPitch) {
+                if (measureRange.maxPitch.value > maxPitch.value) {
+                    maxPitch = measureRange.maxPitch;
                 }
-                var highNote = chordValue.highestNote(),
-                    lowNote = chordValue.lowestNote();
-                if (lowNote.pitch.value < minPitch.value) {
-                    minPitch = lowNote.pitch;
+                if (measureRange.minPitch.value < minPitch.value) {
+                    minPitch = measureRange.minPitch;
                 }
-                if (highNote.pitch.value > maxPitch.value) {
-                    maxPitch = highNote.pitch;
-                }
-            });
+            }
         });
         return {
             'minPitch': minPitch,
