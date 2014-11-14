@@ -1,6 +1,4 @@
-var Pitch = require('./pitch'),
-    Util = require('./util'),
-    Normal = require('./normal'),
+var Util = require('./util'),
     Measure = require('./measure'),
     Section = require('./section');
 
@@ -18,29 +16,40 @@ var Part = function Part(part, partList) {
     }
 
     //Read all measures for the part
-    var prevDivisions = null;
-    var firstSection = new Section();
-    this.sections = [firstSection];
+    var prevValues = {
+        divisions: null,
+        key: null,
+        time: null
+    };
+    var firstSection = new Section(),
+        tempSections = [firstSection];
     this.measures = Util.asArray(part.measure).map(function(value, index) {
-        var meas = new Measure(value, prevDivisions);
+        var meas = new Measure(value, prevValues);
         if (meas.divisions) {
-            prevDivisions = meas.divisions;
+            prevValues.divisions = meas.divisions;
         }
+        if (meas.keySignature !== prevValues.key) {
+            prevValues.key = meas.keySignature;
+        }
+        if (meas.timeSignature !== prevValues.time) {
+            prevValues.time = meas.timeSignature;
+        }
+
         if (meas.leftBarline) {
             var section = new Section();
-            this.sections.push(section);
+            tempSections.push(section);
         }
-        this.sections[this.sections.length - 1].addMeasure(meas, index);
+        tempSections[tempSections.length - 1].addMeasure(meas, index);
         if (meas.rightBarline) {
             var section = new Section();
-            this.sections.push(section);
+            tempSections.push(section);
         }
         return meas;
-    }, this);
+    });
 
-    if (this.sections[this.sections.length - 1].getLength() === 0) {
-        this.sections.splice(this.sections.length - 1, 1);
-    }
+    this.sections = tempSections.filter(function (currSection) {
+        return currSection.getLength() > 0;
+    });
 
     this.getNumMeasures = function() {
         return this.measures.length;
@@ -115,7 +124,7 @@ var Part = function Part(part, partList) {
             stats.totalRest += currMeasureStats.restLength;
             
             // see if we have a new key for this measure
-            if (currMeasure.keySignature) {
+            if (currMeasure.keySignature !== currKey) {
                 currKey = currMeasure.keySignature;
                 stats.keyChanges++;
             }
@@ -128,7 +137,7 @@ var Part = function Part(part, partList) {
             }
 
             // see if we have a new time signature for this measure
-            if (currMeasure.timeSignature) {
+            if (currMeasure.timeSignature !== currTime) {
                 currTime = currMeasure.timeSignature;
                 stats.timeChanges++;
             }
@@ -148,7 +157,7 @@ var Part = function Part(part, partList) {
         var sectionDifficulties = [];
 
         sectionDifficulties = this.sections.map(function (section) {
-            return Util.calculateDifficulty(section.sectionStats, false);
+            return section.getDifficulty();
         });
 
         console.log(sectionDifficulties);
@@ -174,47 +183,23 @@ var Part = function Part(part, partList) {
     };
 
     this.getDifficulty = function() {
-        // var stats = this.getRawStats();
-        // var range = stats.range;
-        // var numMeasures = stats.numMeasures;
-        // var num_metrics = 0;
-
-        // // Notes per measure
-        // var difficulty = stats.numNotes / numMeasures / Normal.notes_per_measure;
-        // num_metrics++;
-
-        // // Accidentals per measure
-        // difficulty += stats.numAccidentals / numMeasures / Normal.accidentals_per_measure;
-        // num_metrics++;
-
-        // // Key signature changes per part
-        // difficulty += stats.keyChanges / numMeasures / Normal.key_changes_per_measure;
-        // num_metrics++;
-
-        // // Time signature changes per part
-        // difficulty += stats.timeChanges / numMeasures / Normal.time_changes_per_measure;
-        // num_metrics++;
-
-        // // Range
-        // difficulty += (range.maxPitch.value - range.minPitch.value) / Normal.range;
-        // num_metrics++;
-        
-        // return difficulty / num_metrics;
         var difficulty = Util.calculateDifficulty(this.getRawStats(), true);
         return difficulty;
     };
 
     this.getRange = function() {
-        var minPitch = new Pitch({'step': 'B', 'octave': 20});
-        var maxPitch = new Pitch({'step': 'C', 'octave': -20});
-        this.measures.forEach(function(measureValue) {
-            var measureRange = measureValue.measureStats.range;
-            if (measureRange.maxPitch && measureRange.minPitch) {
-                if (measureRange.maxPitch.value > maxPitch.value) {
-                    maxPitch = measureRange.maxPitch;
+        var minPitch = null;
+        var maxPitch = null;
+        this.sections.forEach(function(section) {
+            var sectionRange = section.sectionStats.range;
+            if (sectionRange.maxPitch && sectionRange.minPitch) {
+                if (!maxPitch ||
+                    sectionRange.maxPitch.value > maxPitch.value) {
+                    maxPitch = sectionRange.maxPitch;
                 }
-                if (measureRange.minPitch.value < minPitch.value) {
-                    minPitch = measureRange.minPitch;
+                if (!minPitch ||
+                    sectionRange.minPitch.value < minPitch.value) {
+                    minPitch = sectionRange.minPitch;
                 }
             }
         });

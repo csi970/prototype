@@ -11,10 +11,10 @@ var Section = function Section() {
         numAccidentals: 0,
         numGraceNotes: 0,
         numMeasures: 0,
-        // keyUsage: [],
-        // keyChanges: 0,
-        // timeSigUsage: [],
-        // timeChanges: 0,
+        keyUsage: [],
+        keyChanges: 0,
+        timeSigUsage: [],
+        timeChanges: 0,
         totalSound: 0,
         totalRest: 0,
         range: {
@@ -22,12 +22,14 @@ var Section = function Section() {
             'maxPitch': null
         }
     };
-    // this.currKey = null;
-    // this.currTime = null;
+    this.currKey = null;
+    this.currTime = null;
 
     this.addMeasure = function(measure, measureNum) {
         if (this.firstMeasure === -1) {
             this.firstMeasure = measureNum;
+            this.currKey = measure.keySignature;
+            this.currTime = measure.timeSignature;
         }
         this.lastMeasure = measureNum;
         this.measures.push(measure);
@@ -46,29 +48,27 @@ var Section = function Section() {
         this.sectionStats.totalRest += newStats.restLength;
         this.sectionStats.numMeasures++;
         
-        // Can't determine this reliably because the first measure may not change key/time signature
-        // TODO: include key and time signature in calculation
-        // if (measure.keySignature) {
-        //     this.currKey = measure.keySignature;
-        //     this.sectionStats.keyChanges++;
-        // }
+        if (measure.keySignature !== this.currKey) {
+            this.currKey = measure.keySignature;
+            this.sectionStats.keyChanges++;
+        }
 
-        // if (this.sectionStats.keyUsage[this.currKey]) {
-        //     this.sectionStats.keyUsage[this.currKey]++;
-        // } else {
-        //     this.sectionStats.keyUsage[this.currKey] = 1;
-        // }
+        if (this.sectionStats.keyUsage[this.currKey]) {
+            this.sectionStats.keyUsage[this.currKey]++;
+        } else {
+            this.sectionStats.keyUsage[this.currKey] = 1;
+        }
 
-        // if (measure.timeSignature) {
-        //     this.currTime = measure.timeSignature;
-        //     this.sectionStats.timeChanges++;
-        // }
+        if (measure.timeSignature !== this.currTime) {
+            this.currTime = measure.timeSignature;
+            this.sectionStats.timeChanges++;
+        }
 
-        // if (this.sectionStats.timeSigUsage[this.currTime]) {
-        //     this.sectionStats.timeSigUsage[this.currTime]++;
-        // } else {
-        //     this.sectionStats.timeSigUsage[this.currTime] = 1;
-        // }
+        if (this.sectionStats.timeSigUsage[this.currTime]) {
+            this.sectionStats.timeSigUsage[this.currTime]++;
+        } else {
+            this.sectionStats.timeSigUsage[this.currTime] = 1;
+        }
 
         if (newStats.range.minPitch && newStats.range.maxPitch) {
             if (!this.sectionStats.range.maxPitch ||
@@ -88,7 +88,7 @@ var Section = function Section() {
     };
 
     this.getDifficulty = function() {
-        return Util.calculateDifficulty(this.sectionStats, false);
+        return Util.calculateDifficulty(this.sectionStats, true);
     }
 
 };

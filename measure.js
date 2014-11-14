@@ -4,11 +4,11 @@ var Chord = require('./chord'),
     TimeSignature = require('./timeSignature'),
     Note = require('./note');
 
-var Measure = function(json, prevDivisions) {
+var Measure = function(json, previousValues) {
     this.chords = new Array();
-    this.divisions = prevDivisions;
-    this.keySignature = null;
-    this.timeSignature = null;
+    this.divisions = previousValues.divisions;
+    this.keySignature = previousValues.key;
+    this.timeSignature = previousValues.time;
     this.leftBarline = null;
     this.rightBarline = null;
     this.measureStats = {
