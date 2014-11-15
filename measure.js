@@ -5,7 +5,7 @@ var Chord = require('./chord'),
     Note = require('./note');
 
 var Measure = function(json, previousValues) {
-    this.chords = new Array();
+    this.chords = [];
     this.divisions = previousValues.divisions;
     this.keySignature = previousValues.key;
     this.timeSignature = previousValues.time;
@@ -29,7 +29,7 @@ var Measure = function(json, previousValues) {
         if (json.attributes.key) {
             this.keySignature = new KeySignature(parseInt(json.attributes.key.fifths, 10));
         }
-        
+
         // Time signature
         if (json.attributes.time) {
             this.timeSignature = new TimeSignature(json.attributes.time);
@@ -42,7 +42,7 @@ var Measure = function(json, previousValues) {
     }
 
     if (json.barline && json.barline['bar-style']) {
-        if (json.barline['$'].location === 'right') {
+        if (json.barline.$.location === 'right') {
             this.rightBarline = json.barline['bar-style'];
         } else {
             this.leftBarline = json.barline['bar-style'];
@@ -50,9 +50,10 @@ var Measure = function(json, previousValues) {
     }
 
     Util.asArray(json.note).map(function(value, index) {
+        var nt = new Note(value),
+            ch;
         if (value.chord === undefined) {
-            var ch = new Chord();
-            var nt = new Note(value);
+            ch = new Chord();
             if (nt.accidental) {
                 this.measureStats.numAccidentals++;
             }
@@ -70,7 +71,6 @@ var Measure = function(json, previousValues) {
             this.chords.push(ch);
         } else {
             //Add the current note to the last chord encountered
-            var nt = new Note(value);
             if (nt.accidental) {
                 this.measureStats.numAccidentals++;
             }
@@ -101,6 +101,10 @@ var Measure = function(json, previousValues) {
 
     this.measureStats.range.maxPitch = maxPitch;
     this.measureStats.range.minPitch = minPitch;
+
+    this.getDifficulty = function() {
+        return Util.calculateDifficulty(this.measureStats, false);
+    };
 };
 
 module.exports = Measure;
