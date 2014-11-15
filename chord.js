@@ -24,7 +24,7 @@ var Chord = function Chord() {
 
     this.highestNote = function() {
         return this.notes[this.notes.length - 1];
-    }
-}
+    };
+};
 
 module.exports = Chord;

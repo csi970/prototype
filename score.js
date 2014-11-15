@@ -15,44 +15,11 @@ var Score = function(json) {
     });
 
     this.process = function() {
-        // console.log(this.raw);
-        // console.log(this.parts);
-        // console.log(this.measures);
-        // console.log(this.measure[0]);
-
-        //Go through each part (could be multiple) and analyze basic indicators
-        for(var p in this.parts) {
-            var currPart = this.parts[p];
+        //Go through each part and analyze basic indicators
+        this.parts.forEach(function(part) {
             console.log('--------------------------------------');
-            console.log('Part Number: ' + (parseInt(p, 10) + 1));
-            console.log('Part Name: ' + currPart.partName);
-            console.log('Instrument Name: ' + currPart.instrument);
-            // var numMeasures = currPart.getNumMeasures(p);
-            // console.log('Number of Measures: ' + numMeasures);
-            var rawStats = currPart.getRawStats();
-            console.log(rawStats);
-            // console.log('Number of Notes: ' + rawStats.numNotes);
-            console.log('Average Number of Accidentals Per Measure: ' + (rawStats.numAccidentals / rawStats.numMeasures).toFixed(2));
-            console.log('Average Number of Chords Per Measure: ' + (rawStats.numChords / rawStats.numMeasures).toFixed(2));
-            console.log('Average Number of Notes Per Chord: ' + (rawStats.numNotes / rawStats.numChords).toFixed(2));
-            console.log('Range: ' + rawStats.range.minPitch + ' to ' + rawStats.range.maxPitch);
-            console.log('Key Signature Usage Percentages:');
-            for(var keyId in rawStats.keyUsage) {
-                console.log('  ' + keyId + '\t' + ((rawStats.keyUsage[keyId]/rawStats.numMeasures) * 100).toFixed(2) + '%');
-            }
-            console.log('Time Signature Usage Percentages:');
-            for(var timeId in rawStats.timeSigUsage) {
-                console.log('  ' + timeId + '\t' + ((rawStats.timeSigUsage[timeId]/rawStats.numMeasures) * 100).toFixed(2) + '%');
-            }
-
-            console.log('Average note duration: ' + rawStats.totalSound / rawStats.numNotes + ' quarter notes');
-
-            console.log('Difficulty: ' + currPart.getDifficulty());
-            console.log('Measure Difficulties:');
-            currPart.generateMeasureHeatMap();
-            console.log('Section Difficulties:');
-            currPart.generateSectionHeatMap();
-        }
+            part.processToConsole();
+        });
         console.log('--------------------------------------');
     };
 

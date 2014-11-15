@@ -47,7 +47,7 @@ var Section = function Section() {
         this.sectionStats.totalSound += newStats.noteLength;
         this.sectionStats.totalRest += newStats.restLength;
         this.sectionStats.numMeasures++;
-        
+
         if (measure.keySignature !== this.currKey) {
             this.currKey = measure.keySignature;
             this.sectionStats.keyChanges++;
@@ -89,7 +89,7 @@ var Section = function Section() {
 
     this.getDifficulty = function() {
         return Util.calculateDifficulty(this.sectionStats, true);
-    }
+    };
 
 };
 

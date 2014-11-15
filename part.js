@@ -221,6 +221,39 @@ var Part = function Part(part, partList) {
             'maxPitch': maxPitch
         };
     };
+
+    this.processToConsole = function() {
+        console.log('Part Name: ' + this.partName);
+        console.log('Instrument Name: ' + this.instrument);
+
+        var rawStats = this.getRawStats();
+        console.log(rawStats);
+
+        console.log('Average Number of Accidentals Per Measure: ' + (rawStats.numAccidentals / rawStats.numMeasures).toFixed(2));
+        console.log('Average Number of Chords Per Measure: ' + (rawStats.numChords / rawStats.numMeasures).toFixed(2));
+        console.log('Average Number of Notes Per Chord: ' + (rawStats.numNotes / rawStats.numChords).toFixed(2));
+        console.log('Range: ' + rawStats.range.minPitch + ' to ' + rawStats.range.maxPitch);
+
+        console.log('Key Signature Usage Percentages:');
+        for(var keyId in rawStats.keyUsage) {
+            console.log('  ' + keyId + '\t' + ((rawStats.keyUsage[keyId]/rawStats.numMeasures) * 100).toFixed(2) + '%');
+        }
+
+        console.log('Time Signature Usage Percentages:');
+        for(var timeId in rawStats.timeSigUsage) {
+            console.log('  ' + timeId + '\t' + ((rawStats.timeSigUsage[timeId]/rawStats.numMeasures) * 100).toFixed(2) + '%');
+        }
+
+        console.log('Average note duration: ' + rawStats.totalSound / rawStats.numNotes + ' quarter notes');
+        console.log('Average rest duration: ' + rawStats.totalRest / rawStats.numRests + ' quarter notes');
+        console.log('Percent of piece playing: ' + (100 * rawStats.totalSound / (rawStats.totalSound + rawStats.totalRest)).toFixed(2) + '%');
+
+        console.log('Difficulty: ' + this.getDifficulty());
+        console.log('Measure Difficulties:');
+        this.generateMeasureHeatMap();
+        console.log('Section Difficulties:');
+        this.generateSectionHeatMap();
+    };
 };
 
 module.exports = Part;

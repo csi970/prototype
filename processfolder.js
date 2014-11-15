@@ -1,5 +1,5 @@
 var xml2json = require('xml-to-json'),
-    fs = require('fs');
+    fs = require('fs'),
     Score = require('./score'),
     folder = process.argv[2],
     today = new Date(),
@@ -14,7 +14,7 @@ var processFolder = function (currDir, currObj) {
     } else {
         filePath = currObj;
     }
-    var fileStats = fs.statSync(filePath);
+    fileStats = fs.statSync(filePath);
     if (fileStats.isFile()) {
         processFile(currDir, currObj);
     } else if (fileStats.isDirectory) {
@@ -29,7 +29,7 @@ var processFolder = function (currDir, currObj) {
             }
         });
     }
-}
+};
 
 var processFile = function (currDir, currFile) {
     var filePath;
@@ -56,10 +56,10 @@ var processFile = function (currDir, currFile) {
             } catch (fileErr) {
                 fs.writeFileSync(statsFileName, s.CSVHeader + '\n');
             } finally {
-                fs.appendFileSync(statsFileName, processedString)
+                fs.appendFileSync(statsFileName, processedString);
             }
         }
     });
-}
+};
 
 processFolder(null, folder);
