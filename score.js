@@ -50,6 +50,7 @@ var Score = function(json) {
             console.log('Difficulty: ' + currPart.getDifficulty());
             console.log('Measure Difficulties:');
             currPart.generateMeasureHeatMap();
+            currPart.generateSectionHeatMap();
         }
         console.log('--------------------------------------');
     };

@@ -30,7 +30,9 @@ var calculateDifficulty = function(stats, partWise) {
     }
 
     // Range
-    difficulty += (range.maxPitch.value - range.minPitch.value) / Normal.range;
+    if (range.maxPitch && range.minPitch) {
+        difficulty += (range.maxPitch.value - range.minPitch.value) / Normal.range;
+    }
     num_metrics++;
     
     return difficulty / num_metrics;

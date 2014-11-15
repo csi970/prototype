@@ -2,14 +2,15 @@ var Chord = require('./chord'),
     Util = require('./util'),
     KeySignature = require('./keysignature'),
     TimeSignature = require('./timeSignature'),
-    Note = require('./note'),
-    Pitch = require('./pitch');
+    Note = require('./note');
 
-var Measure = function(json, prevDivisions) {
+var Measure = function(json, previousValues) {
     this.chords = new Array();
-    this.divisions = prevDivisions;
-    this.keySignature = null;
-    this.timeSignature = null;
+    this.divisions = previousValues.divisions;
+    this.keySignature = previousValues.key;
+    this.timeSignature = previousValues.time;
+    this.leftBarline = null;
+    this.rightBarline = null;
     this.measureStats = {
         numAccidentals: 0,
         numGraceNotes: 0,
@@ -37,6 +38,14 @@ var Measure = function(json, prevDivisions) {
         // Divisions
         if (json.attributes.divisions) {
             this.divisions = parseInt(json.attributes.divisions,10);
+        }
+    }
+
+    if (json.barline && json.barline['bar-style']) {
+        if (json.barline['$'].location === 'right') {
+            this.rightBarline = json.barline['bar-style'];
+        } else {
+            this.leftBarline = json.barline['bar-style'];
         }
     }
 
@@ -74,28 +83,24 @@ var Measure = function(json, prevDivisions) {
     }, this);
     this.measureStats.numChords += this.chords.length - this.measureStats.numRests;
 
-    var minPitch = new Pitch({'step': 'B', 'octave': 20});
-    var maxPitch = new Pitch({'step': 'C', 'octave': -20});
+    var minPitch = null;
+    var maxPitch = null;
     this.chords.forEach(function(chord) {
         if (chord.rest) {
             return;
         }
         var highNote = chord.highestNote(),
             lowNote = chord.lowestNote();
-        if (lowNote.pitch.value < minPitch.value) {
+        if (!minPitch || lowNote.pitch.value < minPitch.value) {
             minPitch = lowNote.pitch;
         }
-        if (highNote.pitch.value > maxPitch.value) {
+        if (!maxPitch || highNote.pitch.value > maxPitch.value) {
             maxPitch = highNote.pitch;
         }
     });
-    if (minPitch.value > 200 && maxPitch.value < 0) {
-        this.measureStats.range.maxPitch = new Pitch({'step': 'C', 'octave': 0});
-        this.measureStats.range.minPitch = new Pitch({'step': 'C', 'octave': 0});
-    } else {
-        this.measureStats.range.maxPitch = maxPitch;
-        this.measureStats.range.minPitch = minPitch;
-    }
+
+    this.measureStats.range.maxPitch = maxPitch;
+    this.measureStats.range.minPitch = minPitch;
 };
 
 module.exports = Measure;
