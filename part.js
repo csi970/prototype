@@ -1,15 +1,16 @@
 var Util = require('./util'),
     Measure = require('./measure'),
-    Section = require('./section');
+    Section = require('./section'),
+    numbers = require('numbers');
 
 var Part = function Part(part, partList) {
     this.calculatedStats = null;
-    this.partId = part['$'].id;
+    this.partId = part.$.id;
 
     //Get the part name and the instrument name from the part-list object
     for (var partNum in partList) {
         var currPart = partList[partNum];
-        if (this.partId === currPart['$'].id) {
+        if (this.partId === currPart.$.id) {
             this.partName = currPart['part-name'];
             this.instrument = currPart['score-instrument']['instrument-name'];
         }
@@ -24,8 +25,9 @@ var Part = function Part(part, partList) {
     var firstSection = new Section(),
         tempSections = [firstSection];
     this.measures = Util.asArray(part.measure).map(function(value, index) {
-        var meas = new Measure(value, prevValues);
-        if (meas.divisions) {
+        var meas = new Measure(value, prevValues),
+            section;
+        if (meas.divisions !== prevValues.divisions) {
             prevValues.divisions = meas.divisions;
         }
         if (meas.keySignature !== prevValues.key) {
@@ -36,12 +38,12 @@ var Part = function Part(part, partList) {
         }
 
         if (meas.leftBarline) {
-            var section = new Section();
+            section = new Section();
             tempSections.push(section);
         }
         tempSections[tempSections.length - 1].addMeasure(meas, index);
         if (meas.rightBarline) {
-            var section = new Section();
+            section = new Section();
             tempSections.push(section);
         }
         return meas;
@@ -59,12 +61,8 @@ var Part = function Part(part, partList) {
         if (this.calculatedStats) {
             return this.calculatedStats;
         }
-        var currMeasure,
-            currNote,
-            measureNum,
-            chordNum,
-            currKey,
-            currTime,
+        var currKey = this.measures[0].keySignature,
+            currTime = this.measures[0].timeSignature,
             currMeasureStats;
 
         var stats = {
@@ -110,8 +108,7 @@ var Part = function Part(part, partList) {
         };
 
         // loop through each measure
-        for (measureNum in this.measures) {
-            currMeasure = this.measures[measureNum];
+        this.measures.forEach(function (currMeasure) {
             currMeasureStats = currMeasure.measureStats;
 
             // Increment total chords, rests, notes
@@ -122,7 +119,7 @@ var Part = function Part(part, partList) {
             stats.numAccidentals += currMeasureStats.numAccidentals;
             stats.totalSound += currMeasureStats.noteLength;
             stats.totalRest += currMeasureStats.restLength;
-            
+
             // see if we have a new key for this measure
             if (currMeasure.keySignature !== currKey) {
                 currKey = currMeasure.keySignature;
@@ -148,7 +145,7 @@ var Part = function Part(part, partList) {
             } else {
                 stats.timeSigUsage[currTime] = 1;
             }
-        }
+        });
         this.calculatedStats = stats;
         return this.calculatedStats;
     };
@@ -163,28 +160,44 @@ var Part = function Part(part, partList) {
         console.log(sectionDifficulties);
     };
 
-    this.generateMeasureHeatMap = function() {
-        var partStats = this.getRawStats(),
-            measureDifficulties = [],
-            partDifficulty;
+    this.generateMeasureHeatMap = function(sectionNumber) {
+        var measureDifficulties = [],
+            measureDeviance = [],
+            selectedMeasures,
+            averageDifficulty,
+            halfSD;
 
-        partDifficulty = Util.calculateDifficulty(partStats, true);
-
-        // loop through each measure
-        for (measureNum in this.measures) {
-            currMeasure = this.measures[measureNum];
-            currMeasureStats = currMeasure.measureStats;
-            measureDifficulties.push(Util.calculateDifficulty(currMeasureStats, false));
+        if (isNaN(sectionNumber)) {
+            selectedMeasures = this.measures;
+        } else {
+            selectedMeasures = this.sections[sectionNumber].measures;
         }
 
-        // Standard deviation and then label each measure according to # of standard deviations away
+        // loop through each measure
+        measureDifficulties = selectedMeasures.map(function (currMeasure) {
+            return currMeasure.getDifficulty();
+        });
+
+        averageDifficulty = numbers.statistic.mean(measureDifficulties);
+        halfSD = numbers.statistic.standardDev(measureDifficulties)/2;
+
+        measureDeviance = measureDifficulties.map(function(value) {
+            if (value > (averageDifficulty + halfSD)) {
+                return "harder";
+            } else if (value < (averageDifficulty - halfSD)) {
+                return "easier";
+            } else {
+                return "average";
+            }
+        });
 
         console.log(measureDifficulties);
+        console.log("Average Difficulty: " + averageDifficulty + "\nHalf Standard Deviation: " + halfSD);
+        console.log(measureDeviance);
     };
 
     this.getDifficulty = function() {
-        var difficulty = Util.calculateDifficulty(this.getRawStats(), true);
-        return difficulty;
+        return Util.calculateDifficulty(this.getRawStats(), true);
     };
 
     this.getRange = function() {
