@@ -64,8 +64,8 @@ xml2json({
         var s = new Score(json);
         s.process();
 
-        var dbs = new DBScore(s).save(function() {
-            console.log('done');
+        var dbs = new DBScore(s).save(function(err, res) {
+            return console.log('err: ' + err);
         });
 
     }
