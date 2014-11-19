@@ -51,7 +51,7 @@ var scoreSchema = new mongoose.Schema({
     }]
 });
 
-var DBScore = mongoose.model('Score');
+var DBScore = mongoose.model('Score', scoreSchema);
 mongoose.connect('mongodb://localhost/music');
 
 xml2json({
