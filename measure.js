@@ -64,7 +64,7 @@ var Measure = function(json, previousValues) {
             if (ch.rest) {
                 this.measureStats.numRests++;
                 this.measureStats.restLength += (nt.grace ? 0 : nt.duration / this.divisions);
-            } else {
+            } else if (!ch.cue) {
                 this.measureStats.numNotes++;
                 this.measureStats.noteLength += (nt.grace ? 0 : nt.duration / this.divisions);
             }

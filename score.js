@@ -33,19 +33,24 @@ var Score = function(json) {
             finalString += ',' + currPart.partName;
             finalString += ',' + currPart.instrument;
             finalString += ',' + rawStats.numMeasures;
+            finalString += ',' + currPart.sections.length;
             finalString += ',' + rawStats.numChords;
+            finalString += ',' + rawStats.numRests;
             finalString += ',' + rawStats.numNotes;
             finalString += ',' + rawStats.numAccidentals;
             finalString += ',' + rawStats.numGraceNotes;
-            finalString += ',' + rawStats.range.minPitch;
-            finalString += ',' + rawStats.range.maxPitch;
+            finalString += ',' + rawStats.range.minPitch.value;
+            finalString += ',' + rawStats.range.maxPitch.value;
             finalString += ',' + rawStats.totalSound;
+            finalString += ',' + rawStats.totalRest;
+            finalString += ',' + rawStats.keyChanges;
+            finalString += ',' + rawStats.timeChanges;
             finalString += '\n';
         });
         return finalString;
     };
 
-    this.CSVHeader = 'Score File Name,Part Number,Part Name,Instrument Name,Number of Measures,Number of Chords,Number of Notes,Number of Accidentals,Number of Grace Notes,Minimum Note,Maximum Note,Total Sound';
+    this.CSVHeader = 'Score File Name,Part Number,Part Name,Instrument Name,Number of Measures,Number of Sections,Number of Chords,Number of Rests,Number of Notes,Number of Accidentals,Number of Grace Notes,Minimum Note Value,Maximum Note Value,Total Sound,Total Rest,Key Signature Changes,Time Signature Changes';
 };
 
 module.exports = Score;
