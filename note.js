@@ -24,8 +24,9 @@ var Note = function(json) {
         this.accidental = json.accidental;
     }
 
-    if (json.grace) {
+    if (json.grace !== undefined) {
         this.grace = true;
+        this.duration = 0;
     }
 };
 
