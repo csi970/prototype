@@ -1,6 +1,6 @@
 {
   "name": "music-analysis",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Analyzes MusicXML files and determines difficulty based on a variety of factors",
   "tags": [
     "music",
@@ -18,7 +18,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "xml-to-json": "latest",
+    "xml2json": "latest",
+    "node-zip": "latest",
     "numbers": "latest"
   },
   "contributors": [
