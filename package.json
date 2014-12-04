@@ -1,6 +1,6 @@
 {
   "name": "music-analysis",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Analyzes MusicXML files and determines difficulty based on a variety of factors",
   "tags": [
     "music",
