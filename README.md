@@ -12,17 +12,19 @@ Or you can [download the ZIP](https://github.com/csi970/prototype/archive/master
 
 It's easy to use asynchronously in your Node.js programs:
 
-    var music = require('music-analysis');
+```javascript
+var music = require('music-analysis');
 
-    music.parseMXLFile('AwesomeScore.mxl', function(score) {
-        var parts = score.parts;
-        parts.forEach(function(part) {
-            var stats = part.getRawStats();
-            var m = stats.numMeasures;
+music.parseMXLFile('AwesomeScore.mxl', function(score) {
+    var parts = score.parts;
+    parts.forEach(function(part) {
+        var stats = part.getRawStats();
+        var m = stats.numMeasures;
 
-            console.log('This part has ' + m + ' measures.')
-        });
+        console.log('This part has ' + m + ' measures.')
     });
+});
+```
 
 You can also check out the `./examples/`.
 
