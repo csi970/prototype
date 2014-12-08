@@ -1,13 +1,18 @@
 var music = require('../lib/index.js');
 
-music.parseMXLFile('Chariots_of_Fire.mxl', function(score) {
-    score.parts.forEach(function(part) {
-        console.log(part.getRawStats());
-    });
+var showPart = function(part) {
+    console.log('Part ' + part.partId + ': ' + part.partName + ' - ' + part.instrument);
+    var stats = part.getRawStats();
+    console.log('    Measures: ' + stats.numMeasures);
+    console.log('      Chords: ' + stats.numChords);
+    console.log('       Notes: ' + stats.numNotes);
+    console.log('       Rests: ' + stats.numRests);
+};
+
+music.parseMXLFile('Celtic_Carol.mxl', function(score) {
+    score.parts.forEach(showPart);
 });
 
 music.parseMusicXMLFile('testScore.xml', function(score) {
-    score.parts.forEach(function(part) {
-        console.log(part.getRawStats());
-    });
+    score.parts.forEach(showPart);
 });
